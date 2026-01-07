@@ -16,6 +16,10 @@
     <DataTemplate DataType="{x:Type vm:SetupViewModel}">
       <pages:SetupPage/>
     </DataTemplate>
+
+    <DataTemplate DataType="{x:Type vm:OpponentDownViewModel}">
+      <pages:OpponentDownPage/>
+    </DataTemplate>
   </Application.DataTemplates>
 
 </Application>
