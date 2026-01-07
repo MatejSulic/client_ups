@@ -1,0 +1,110 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:AvalonClient.ViewModels"
+        x:Class="AvalonClient.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Width="980" Height="520"
+        Title="UPS Client">
+
+  <DockPanel Margin="12" LastChildFill="True">
+
+    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8">
+      <TextBox Width="180" Watermark="Host" Text="{Binding Host}"/>
+      <TextBox Width="90"  Watermark="Port" Text="{Binding PortText}"/>
+      <TextBox Width="180" Watermark="Nick" Text="{Binding Nick}"/>
+      <Button Content="Connect" Command="{Binding ConnectCommand}"/>
+      <Button Content="Disconnect" Command="{Binding DisconnectCommand}"/>
+    </StackPanel>
+
+    <!-- LOBBY -->
+    <Grid Margin="0,10,0,0"
+          ColumnDefinitions="*,320"
+          ColumnSpacing="10"
+          IsVisible="{Binding IsLobbyPage}">
+
+      <!-- LOG -->
+      <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+        <TextBox AcceptsReturn="True" IsReadOnly="True" TextWrapping="NoWrap" Text="{Binding Log}"/>
+      </ScrollViewer>
+
+      <!-- ROOMS -->
+      <Border Grid.Column="1" Padding="10" CornerRadius="8" BorderThickness="1">
+        <DockPanel>
+
+          <TextBlock DockPanel.Dock="Top" FontSize="16" Text="Lobby"/>
+          <TextBlock DockPanel.Dock="Top" Margin="0,4,0,6" Opacity="0.7" Text="{Binding RoomsHeader}"/>
+
+          <Border DockPanel.Dock="Top" Padding="8" CornerRadius="6" BorderThickness="1" Margin="0,0,0,8">
+            <StackPanel Spacing="2">
+              <TextBlock FontSize="14" Text="{Binding RoomBadge}"/>
+              <TextBlock Opacity="0.75" Text="{Binding RoomStatus}"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Buttons -->
+          <StackPanel DockPanel.Dock="Bottom" Spacing="6" Margin="0,8,0,0">
+            <Button Content="Refresh (LIST)"
+                    IsEnabled="{Binding IsConnected}"
+                    Command="{Binding ListCommand}"/>
+
+            <Button Content="CREATE (auto-join)"
+                    IsEnabled="{Binding IsConnected}"
+                    Command="{Binding CreateCommand}"/>
+
+            <Button Content="JOIN (selected)"
+                    IsEnabled="{Binding CanJoinSelected}"
+                    Command="{Binding JoinCommand}"/>
+
+            <Button Content="REJOIN (selected)"
+                    IsEnabled="{Binding CanJoinSelected}"
+                    Command="{Binding RejoinCommand}"/>
+
+            <Button Content="LEAVE (room)"
+                    IsEnabled="{Binding CanLeave}"
+                    Command="{Binding LeaveCommand}"/>
+
+          </StackPanel>
+
+          <!-- Rooms list -->
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ListBox ItemsSource="{Binding Rooms}"
+                     SelectedItem="{Binding SelectedRoom}">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <Border Padding="6" CornerRadius="6">
+                    <Grid ColumnDefinitions="40,60,*,*,*"
+                          ColumnSpacing="8">
+                      <TextBlock Grid.Column="0" Text="{Binding Id}"/>
+                      <TextBlock Grid.Column="1" Text="{Binding PlayersText}"/>
+                      <TextBlock Grid.Column="2" Text="{Binding State}"/>
+                      <TextBlock Grid.Column="3" Text="{Binding Phase}"/>
+                      <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="{Binding P1}"/>
+                        <TextBlock Text="{Binding P2}"/>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </ScrollViewer>
+
+        </DockPanel>
+      </Border>
+    </Grid>
+
+    <!-- SETUP -->
+    <Border Margin="0,10,0,0"
+            Padding="14"
+            CornerRadius="10"
+            BorderThickness="1"
+            IsVisible="{Binding IsSetupPage}">
+      <StackPanel Spacing="10">
+        <TextBlock FontSize="20" Text="SETUP phase"/>
+        <TextBlock FontSize="14" Opacity="0.8" Text="{Binding RoomBadge}"/>
+        <TextBlock Text="Placeholder. Tady bude pokládání lodí."/>
+      </StackPanel>
+    </Border>
+
+  </DockPanel>
+</Window>
