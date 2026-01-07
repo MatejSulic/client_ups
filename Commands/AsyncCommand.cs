@@ -18,7 +18,6 @@ public sealed class AsyncCommand : ICommand
     public async void Execute(object? parameter)
     {
         if (_busy) return;
-
         _busy = true;
         CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 

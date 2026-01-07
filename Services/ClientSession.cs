@@ -53,26 +53,62 @@ public sealed class ClientSession : IDisposable
     }
 
     private async Task RxLoopAsync(CancellationToken ct)
+{
+    if (_stream == null)
     {
-        try
-        {
-            while (!ct.IsCancellationRequested && _reader != null)
-            {
-                var line = await _reader.ReadLineAsync();
-                if (line == null) break;
+        DisconnectInternal("Disconnected.");
+        return;
+    }
 
-                LineReceived?.Invoke(line);
+    var buf = new byte[4096];
+    var sb = new StringBuilder();
+
+    try
+    {
+        while (!ct.IsCancellationRequested)
+        {
+            int n = await _stream.ReadAsync(buf, 0, buf.Length, ct);
+            if (n == 0)
+            {
+                Info?.Invoke("RX ended: EOF (server closed connection).");
+                break;
+            }
+
+            sb.Append(Encoding.UTF8.GetString(buf, 0, n));
+
+            while (true)
+            {
+                var s = sb.ToString();
+                int nl = s.IndexOf('\n');
+                if (nl < 0) break;
+
+                var line = s.Substring(0, nl);
+                // consume
+                sb.Clear();
+                sb.Append(s.Substring(nl + 1));
+
+                line = line.TrimEnd('\r');
+                if (line.Length > 0)
+                    LineReceived?.Invoke(line);
             }
         }
-        catch (Exception ex)
-        {
-            Info?.Invoke($"RX error: {ex.Message}");
-        }
-        finally
-        {
-            DisconnectInternal("Disconnected.");
-        }
     }
+    catch (OperationCanceledException)
+    {
+        // normal
+    }
+    catch (Exception ex)
+    {
+        Info?.Invoke($"RX error: {ex.GetType().Name}: {ex.Message}");
+        if (ex is SocketException se)
+            Info?.Invoke($"SocketErrorCode: {se.SocketErrorCode}");
+    }
+    finally
+    {
+        DisconnectInternal("Disconnected.");
+    }
+}
+
 
     public void Disconnect()
     {

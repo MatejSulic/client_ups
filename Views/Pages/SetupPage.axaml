@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:AvalonClient.ViewModels"
+             x:Class="AvalonClient.Views.Pages.SetupPage"
+             x:DataType="vm:SetupViewModel">
+
+  <Border Padding="14" CornerRadius="10" BorderThickness="1">
+    <StackPanel Spacing="10">
+
+      <TextBlock FontSize="20" Text="SETUP phase"/>
+      <TextBlock Opacity="0.8" Text="{Binding RoomBadge}"/>
+
+      <TextBlock Text="{Binding Status}" />
+
+      <!-- Opponent up banner -->
+      <Border IsVisible="{Binding OpponentUpVisible}"
+              Padding="10"
+              CornerRadius="8"
+              BorderThickness="1">
+        <TextBlock FontSize="16" Text="{Binding OpponentUpText}"/>
+      </Border>
+
+      <!-- Opponent timeout banner -->
+      <Border IsVisible="{Binding TimeoutVisible}"
+              Padding="10"
+              CornerRadius="8"
+              BorderThickness="1">
+        <StackPanel Spacing="6">
+          <TextBlock FontSize="16" Text="⚠ OPPONENT TIMEOUT"/>
+          <TextBlock Opacity="0.9" Text="{Binding TimeoutText}"/>
+        </StackPanel>
+      </Border>
+
+      <Border Padding="10" CornerRadius="8" BorderThickness="1">
+        <TextBlock Text="Ship placement UI goes here (next step)."/>
+      </Border>
+
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button Content="LEAVE" Command="{Binding LeaveCommand}" />
+      </StackPanel>
+
+    </StackPanel>
+  </Border>
+</UserControl>

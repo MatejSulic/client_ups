@@ -65,6 +65,7 @@
 /home/matej/Vejska/3.rok/UPS/sulic_sem_ups/AvalonClient/obj/Debug/net9.0/AvalonClient.AssemblyInfoInputs.cache
 /home/matej/Vejska/3.rok/UPS/sulic_sem_ups/AvalonClient/obj/Debug/net9.0/AvalonClient.AssemblyInfo.cs
 /home/matej/Vejska/3.rok/UPS/sulic_sem_ups/AvalonClient/obj/Debug/net9.0/AvalonClient.csproj.CoreCompileInputs.cache
+/home/matej/Vejska/3.rok/UPS/sulic_sem_ups/AvalonClient/obj/Debug/net9.0/AvalonClient.sourcelink.json
 /home/matej/Vejska/3.rok/UPS/sulic_sem_ups/AvalonClient/obj/Debug/net9.0/AvalonCl.73183004.Up2Date
 /home/matej/Vejska/3.rok/UPS/sulic_sem_ups/AvalonClient/obj/Debug/net9.0/AvalonClient.dll
 /home/matej/Vejska/3.rok/UPS/sulic_sem_ups/AvalonClient/obj/Debug/net9.0/refint/AvalonClient.dll
