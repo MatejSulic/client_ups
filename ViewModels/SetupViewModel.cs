@@ -1,4 +1,5 @@
 using AvalonClient.Commands;
+using AvalonClient.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -15,12 +16,12 @@ public sealed class SetupViewModel : INotifyPropertyChanged
     public event Action? LeaveRequested;
 
     // Ready clicked => MainVM sends: PLACING + PLACE*5 + PLACING_STOP
-    public event Action<IReadOnlyList<ShipPlacement>>? ReadyShipsRequested;
+    public event Action<IReadOnlyList<Ship>>? ReadyShipsRequested;
 
     public const int N = 10;
 
     private readonly int[,] _occ = new int[N, N]; // 0 empty, 1 ship
-    private readonly List<ShipPlacement> _ships = new();
+    private readonly List<Ship> _ships = new();
 
     private bool _sending;
     private bool _opponentReady;
@@ -141,7 +142,6 @@ public sealed class SetupViewModel : INotifyPropertyChanged
         ResetUi();
     }
 
-    public sealed record ShipPlacement(int X, int Y, int Len, char Dir);
 
     public void SetRoomBadgeFromLobby(string badge)
     {
@@ -218,7 +218,7 @@ public sealed class SetupViewModel : INotifyPropertyChanged
             _occ[cx, cy] = 1;
         }
 
-        _ships.Add(new ShipPlacement(x, y, len, dir));
+        _ships.Add(new Ship(x, y, len, dir));
         FleetLens.Remove(len);
 
         SelectedLen = FleetLens.Count > 0 ? FleetLens[0] : 0;
@@ -309,6 +309,8 @@ public sealed class SetupViewModel : INotifyPropertyChanged
             return;
         }
     }
+
+    public IReadOnlyList<Ship> GetShips() => _ships.AsReadOnly();
 
     private void OnChanged(string n) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
 }

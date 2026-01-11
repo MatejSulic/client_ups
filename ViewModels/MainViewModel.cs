@@ -171,8 +171,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
             // Setup might still want to see this line
             Setup.HandleServerLine(line);
 
+
             Game.SetRoomBadge(Lobby.RoomBadge);
             CurrentPage = Game;
+            Game.SetFleet(Setup.GetShips());
             Game.HandleServerLine(line);
             return;
         }

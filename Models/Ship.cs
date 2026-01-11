@@ -8,4 +8,13 @@ public sealed class Ship
     public char Dir { get; set; } // 'H'/'V'
 
     public override string ToString() => $"{Len}{Dir} @ ({X},{Y})";
+
+
+    public Ship(int x, int y, int len, char dir)
+        {
+            X = x;
+            Y = y;
+            Len = len;
+            Dir = dir;
+        }
 }
