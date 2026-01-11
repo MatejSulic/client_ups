@@ -93,7 +93,6 @@ public sealed class LobbyViewModel : INotifyPropertyChanged
         IsConnected = false;
     }
 
-    // === MAIN VM sem posílá logy ===
     public void AppendInfo(string line) => Log += $"{line}\n";
     public void AppendRx(string line) => Log += $"< {line}\n";
 

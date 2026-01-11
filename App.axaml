@@ -20,6 +20,12 @@
     <DataTemplate DataType="{x:Type vm:OpponentDownViewModel}">
       <pages:OpponentDownPage/>
     </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:GameViewModel}">
+      <pages:GamePage/>
+    </DataTemplate>
   </Application.DataTemplates>
+
+      
+
 
 </Application>

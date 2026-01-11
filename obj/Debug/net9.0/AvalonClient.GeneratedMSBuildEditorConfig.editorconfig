@@ -27,6 +27,9 @@ build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 [/home/matej/Vejska/3.rok/UPS/sulic_sem_ups/AvalonClient/Views/MainWindow.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
+[/home/matej/Vejska/3.rok/UPS/sulic_sem_ups/AvalonClient/Views/Pages/GamePage.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
 [/home/matej/Vejska/3.rok/UPS/sulic_sem_ups/AvalonClient/Views/Pages/LobbyPage.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
