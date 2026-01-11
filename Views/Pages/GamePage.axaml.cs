@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using AvalonClient.ViewModels;
 using System.ComponentModel;
 
@@ -84,9 +85,45 @@ public partial class GamePage : UserControl
         vm.ShootAt(x, y);
     }
 
+    private static IBrush EnemyBrush(char c)
+    {
+        // Enemy view:
+        // M = water (modrá)
+        // H = hit (zelená)
+        // K (nebo třeba 'S' pokud bys posílal) = sunk (červená)
+        return c switch
+        {
+            'M' => Brushes.DodgerBlue,
+            'H' => Brushes.LimeGreen,
+            'K' => Brushes.IndianRed,
+            'S' => Brushes.IndianRed, // kdyby sis někdy poslal sunk jako S
+            _ => Brushes.LightGray
+        };
+    }
+
+    private static IBrush SelfBrush(char c)
+    {
+        // Nechávám basic. Klidně si to můžeš upravit:
+        // S = tvoje loď (šedá světle), H = zásah (červená), M = miss (modrá).
+        return c switch
+        {
+            'H' => Brushes.IndianRed,
+            'M' => Brushes.DodgerBlue,
+            'S' => Brushes.Gainsboro,
+            _ => Brushes.LightGray
+        };
+    }
+
+    private static IBrush ForegroundFor(IBrush bg)
+    {
+        // Ať je text čitelný na barvách
+        if (ReferenceEquals(bg, Brushes.LightGray) || ReferenceEquals(bg, Brushes.Gainsboro))
+            return Brushes.Black;
+        return Brushes.White;
+    }
+
     private void Refresh(GameViewModel vm)
     {
-        // update button contents from rows
         var er = vm.EnemyRows;
         var sr = vm.SelfRows;
 
@@ -97,10 +134,24 @@ public partial class GamePage : UserControl
 
             for (int x = 0; x < GameViewModel.N; x++)
             {
-                _enemyBtn[x, y].Content = rowE[x].ToString();
-                _enemyBtn[x, y].IsEnabled = vm.MyTurn; // only clickable on your turn
+                // Enemy
+                char ec = rowE[x];
+                var eb = _enemyBtn[x, y];
+                eb.Content = ec.ToString();
+                eb.IsEnabled = vm.MyTurn; // only clickable on your turn
 
-                _selfBtn[x, y].Content = rowS[x].ToString();
+                var ebg = EnemyBrush(ec);
+                eb.Background = ebg;
+                eb.Foreground = ForegroundFor(ebg);
+
+                // Self
+                char sc = rowS[x];
+                var sb = _selfBtn[x, y];
+                sb.Content = sc.ToString();
+
+                var sbg = SelfBrush(sc);
+                sb.Background = sbg;
+                sb.Foreground = ForegroundFor(sbg);
             }
         }
     }
