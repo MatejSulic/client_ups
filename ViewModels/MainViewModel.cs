@@ -2,6 +2,7 @@ using Avalonia.Threading;
 using AvalonClient.Services;
 using System;
 using System.ComponentModel;
+using System.Threading.Tasks;
 
 namespace AvalonClient.ViewModels;
 
@@ -37,57 +38,73 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         _currentPage = Lobby;
 
-        // SETUP -> LEAVE
+        // SETUP -> LEAVE (never block UI)
         Setup.LeaveRequested += () =>
-            Dispatcher.UIThread.Post(async () =>
+        {
+            _ = Task.Run(async () =>
             {
                 try { await _session.SendLineAsync("LEAVE"); }
                 catch { /* ignore */ }
             });
+        };
 
-        // SETUP -> READY (send ships)
+        // SETUP -> READY (send ships) (never block UI)
         Setup.ReadyShipsRequested += ships =>
-            Dispatcher.UIThread.Post(async () =>
+        {
+            _ = Task.Run(async () =>
             {
                 try
                 {
-                    await _session.SendLineAsync("PLACING");
+                    await _session.SendLineAsync("PLACING_START");
                     foreach (var s in ships)
                         await _session.SendLineAsync($"PLACE {s.X} {s.Y} {s.Len} {s.Dir}");
                     await _session.SendLineAsync("PLACING_STOP");
                 }
-                catch { /* ignore */ }
+                catch (Exception ex)
+                {
+                    await Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        Setup.SendFailed(ex.Message);
+                        Lobby.AppendInfo("Send ships failed: " + ex);
+                    });
+                }
             });
+        };
 
-        // GAME -> SHOOT
+        // GAME -> SHOOT (never block UI)
         Game.ShootRequested += (x, y) =>
-            Dispatcher.UIThread.Post(async () =>
+        {
+            _ = Task.Run(async () =>
             {
                 try { await _session.SendLineAsync($"SHOOT {x} {y}"); }
                 catch { /* ignore */ }
             });
+        };
 
-        // GAME -> LEAVE
+        // GAME -> LEAVE (never block UI)
         Game.LeaveRequested += () =>
-            Dispatcher.UIThread.Post(async () =>
+        {
+            _ = Task.Run(async () =>
             {
                 try { await _session.SendLineAsync("LEAVE"); }
                 catch { /* ignore */ }
             });
+        };
 
-        // logs
+        // logs (UI thread)
         _session.Info += s =>
             Dispatcher.UIThread.Post(() => Lobby.AppendInfo(s));
 
+        // line routing (UI thread)
         _session.LineReceived += line =>
-    Dispatcher.UIThread.Post(() =>
-    {
-        Lobby.AppendRx(line);
-        Lobby.AppendInfo($"[route] page={CurrentPage.GetType().Name} line='{line.Trim()}'");
-        OnServerLine(line);
-    });
+            Dispatcher.UIThread.Post(() =>
+            {
+                Lobby.AppendRx(line);
+                Lobby.AppendInfo($"[route] page={CurrentPage.GetType().Name} line='{line.Trim()}'");
+                OnServerLine(line);
+            });
 
-
+        // disconnected (UI thread)
         _session.Disconnected += () =>
             Dispatcher.UIThread.Post(() =>
             {
@@ -96,6 +113,39 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 Lobby.OnDisconnected();
                 CurrentPage = Lobby;
             });
+    }
+
+    private static bool LooksLikeSetupLine(string line)
+    {
+        // keep this generous; better to route into Setup than to miss setup
+        if (line.Equals("SETUP", StringComparison.Ordinal)) return true;
+
+        // common variants / phase markers
+        if (line.Equals("PHASE SETUP", StringComparison.Ordinal)) return true;
+        if (line.Equals("PHASE_SETUP", StringComparison.Ordinal)) return true;
+        if (line.StartsWith("PHASE ", StringComparison.Ordinal) && line.Contains("SETUP", StringComparison.Ordinal)) return true;
+
+        // placing + ships confirmation
+        if (line.Equals("PLACING_START", StringComparison.Ordinal)) return true;
+        if (line.Equals("PLACING_STOP", StringComparison.Ordinal)) return true;
+        if (line.Equals("SHIPS_OK", StringComparison.Ordinal)) return true;
+        if (line.StartsWith("ERROR ", StringComparison.Ordinal) && (line.Contains("PLACING", StringComparison.Ordinal) || line.Contains("SHIPS", StringComparison.Ordinal))) return true;
+
+        // room/join notifications may precede SETUP in some servers
+        if (line.StartsWith("JOINED ", StringComparison.Ordinal)) return true;
+
+        return false;
+    }
+
+    private void EnsureSetupActive()
+    {
+        if (ReferenceEquals(CurrentPage, Setup)) return;
+
+        Setup.ResetUi();
+        CurrentPage = Setup;
+
+        Setup.SetRoomBadgeFromLobby(Lobby.RoomBadge);
+        Setup.SetStatus("SETUP phase.");
     }
 
     private void OnServerLine(string line)
@@ -115,31 +165,26 @@ public sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
 
-        // GO TO SETUP
-        if (line.Equals("SETUP", StringComparison.Ordinal) ||
-            line.Equals("PHASE SETUP", StringComparison.Ordinal))
+        // GO TO GAME
+        if (line.Equals("PLAY", StringComparison.Ordinal))
         {
-            Setup.ResetUi();
-            CurrentPage = Setup;
+            // Setup might still want to see this line
+            Setup.HandleServerLine(line);
 
-            Lobby.HandleServerLine(line);
-            Setup.SetRoomBadgeFromLobby(Lobby.RoomBadge);
-            Setup.SetStatus("SETUP phase.");
+            Game.SetRoomBadge(Lobby.RoomBadge);
+            CurrentPage = Game;
+            Game.HandleServerLine(line);
             return;
         }
 
-        // GO TO GAME (robust accept)
-        if (line.Equals("PLAY", StringComparison.Ordinal) ||
-            line.StartsWith("PLAY ", StringComparison.Ordinal) ||
-            line.Equals("PHASE GAME", StringComparison.Ordinal) ||
-            line.StartsWith("PHASE GAME ", StringComparison.Ordinal) ||
-            line.Equals("PHASE PLAY", StringComparison.Ordinal) ||
-            line.StartsWith("PHASE PLAY ", StringComparison.Ordinal))
+        // Robust: if we see setup-related lines, force Setup page
+        if (LooksLikeSetupLine(line))
         {
-            Game.SetRoomBadge(Lobby.RoomBadge);
-            CurrentPage = Game;
+            EnsureSetupActive();
 
-            Game.HandleServerLine(line); // let GameVM see PLAY too
+            // let Lobby keep its internal room badge/list in sync too
+            Lobby.HandleServerLine(line);
+            Setup.HandleServerLine(line);
             return;
         }
 

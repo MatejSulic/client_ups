@@ -121,7 +121,7 @@ public sealed class SetupViewModel : INotifyPropertyChanged
             int fleet = FleetLens.Count;
             bool sending = _sending;
 
-            // debug info (keep for now, helps you)
+            // debug info (you can remove later)
             Status = $"READY clicked. CanReady={can} ships={ships} fleetLens={fleet} sending={sending}";
 
             if (!can) return System.Threading.Tasks.Task.CompletedTask;
@@ -158,6 +158,18 @@ public sealed class SetupViewModel : INotifyPropertyChanged
 
         ResetShipsLocal();
         Status = "SETUP: Place your ships.";
+    }
+
+    /// <summary>
+    /// Call this from MainViewModel when sending ships fails.
+    /// Otherwise _sending stays true and one player gets stuck forever.
+    /// </summary>
+    public void SendFailed(string reason)
+    {
+        _sending = false;
+        OnChanged(nameof(CanPlace));
+        OnChanged(nameof(CanReady));
+        Status = "❌ Send failed: " + (string.IsNullOrWhiteSpace(reason) ? "unknown error" : reason);
     }
 
     private void ResetShipsLocal()
@@ -258,6 +270,7 @@ public sealed class SetupViewModel : INotifyPropertyChanged
 
         if (line.Equals("SHIPS_OK", StringComparison.Ordinal))
         {
+            // we intentionally keep _sending=true to prevent resubmitting ships
             Status = "✅ Ships accepted. Waiting for opponent…";
             return;
         }
