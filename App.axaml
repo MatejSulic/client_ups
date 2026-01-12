@@ -23,6 +23,9 @@
     <DataTemplate DataType="{x:Type vm:GameViewModel}">
       <pages:GamePage/>
     </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:ResultViewModel}">
+      <pages:ResultPage/>
+    </DataTemplate>
   </Application.DataTemplates>
 
       
