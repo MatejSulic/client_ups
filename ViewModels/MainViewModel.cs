@@ -126,27 +126,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     }
 
-    private static bool LooksLikeSetupLine(string line)
-    {
-        // keep this generous; better to route into Setup than to miss setup
-        if (line.Equals("SETUP", StringComparison.Ordinal)) return true;
-
-        // common variants / phase markers
-        if (line.Equals("PHASE SETUP", StringComparison.Ordinal)) return true;
-        if (line.Equals("PHASE_SETUP", StringComparison.Ordinal)) return true;
-        if (line.StartsWith("PHASE ", StringComparison.Ordinal) && line.Contains("SETUP", StringComparison.Ordinal)) return true;
-
-        // placing + ships confirmation
-        if (line.Equals("PLACING_START", StringComparison.Ordinal)) return true;
-        if (line.Equals("PLACING_STOP", StringComparison.Ordinal)) return true;
-        if (line.Equals("SHIPS_OK", StringComparison.Ordinal)) return true;
-        if (line.StartsWith("ERROR ", StringComparison.Ordinal) && (line.Contains("PLACING", StringComparison.Ordinal) || line.Contains("SHIPS", StringComparison.Ordinal))) return true;
-
-        // room/join notifications may precede SETUP in some servers
-        if (line.StartsWith("JOINED ", StringComparison.Ordinal)) return true;
-
-        return false;
-    }
 
     private void EnsureSetupActive()
     {
@@ -165,8 +144,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         // RETURN TO LOBBY (everywhere)
         if (line.Equals("RETURNED_TO_LOBBY", StringComparison.Ordinal) ||
-            line.Equals("OPPONENT_LEFT", StringComparison.Ordinal) ||
-            line.StartsWith("LEFT ", StringComparison.Ordinal))
+                line.StartsWith("LEFT ", StringComparison.Ordinal) ||
+                line.Equals("OPPONENT_LEFT", StringComparison.Ordinal))
         {
             Setup.ResetUi();
             Game.ResetUi();
@@ -200,7 +179,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
 
         // Robust: if we see setup-related lines, force Setup page
-        if (LooksLikeSetupLine(line))
+        if (line.Equals("SETUP", StringComparison.Ordinal))
         {
             EnsureSetupActive();
 

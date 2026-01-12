@@ -23,8 +23,11 @@ public sealed class SetupViewModel : INotifyPropertyChanged
     private readonly int[,] _occ = new int[N, N]; // 0 empty, 1 ship
     private readonly List<Ship> _ships = new();
 
-    private bool _sending;
+
+   private bool _sending;
+    private bool _shipsConfirmed;
     private bool _opponentReady;
+
 
     private string _roomBadge = "Room: —";
     private string _status = "SETUP: Place your ships.";
@@ -33,8 +36,8 @@ public sealed class SetupViewModel : INotifyPropertyChanged
 
     public ObservableCollection<int> FleetLens { get; } = new();
 
-    private int _selectedLen;
-    public int SelectedLen
+    private int? _selectedLen;
+    public int? SelectedLen
     {
         get => _selectedLen;
         set
@@ -62,8 +65,10 @@ public sealed class SetupViewModel : INotifyPropertyChanged
     // helper for MainViewModel
     public void SetStatus(string s) => Status = s;
 
-    public bool CanPlace => !_sending && FleetLens.Count > 0 && SelectedLen > 0;
-    public bool CanReady => !_sending && FleetLens.Count == 0 && _ships.Count == 5;
+    public bool CanPlace => !_sending && !_shipsConfirmed && FleetLens.Count > 0 && (SelectedLen ?? 0) > 0;
+
+    public bool CanReady => !_sending && !_shipsConfirmed && FleetLens.Count == 0 && _ships.Count == 5;
+
 
     public string DirText => _dir == 'H' ? "HORIZONTAL" : "VERTICAL";
 
@@ -114,7 +119,6 @@ public sealed class SetupViewModel : INotifyPropertyChanged
             return System.Threading.Tasks.Task.CompletedTask;
         });
 
-        // IMPORTANT: snapshot CanReady BEFORE toggling _sending
         ReadyCommand = new AsyncCommand(() =>
         {
             bool can = CanReady;
@@ -152,6 +156,7 @@ public sealed class SetupViewModel : INotifyPropertyChanged
     public void ResetUi()
     {
         _sending = false;
+        _shipsConfirmed = false;
         OpponentReady = false;
         _dir = 'H';
         OnChanged(nameof(DirText));
@@ -174,6 +179,7 @@ public sealed class SetupViewModel : INotifyPropertyChanged
 
     private void ResetShipsLocal()
     {
+        _shipsConfirmed = false;
         Array.Clear(_occ, 0, _occ.Length);
         _ships.Clear();
 
@@ -184,7 +190,8 @@ public sealed class SetupViewModel : INotifyPropertyChanged
         FleetLens.Add(3);
         FleetLens.Add(2);
 
-        SelectedLen = FleetLens[0];
+        SelectedLen = FleetLens.Count > 0 ? FleetLens[0] : null;
+
 
         RebuildRows();
         OnChanged(nameof(SelfRows));
@@ -196,7 +203,9 @@ public sealed class SetupViewModel : INotifyPropertyChanged
     {
         if (!CanPlace) return;
 
-        int len = SelectedLen;
+        int len = SelectedLen ?? 0;
+        if (len <= 0) return;
+
         char dir = _dir;
 
         if (!Fits(x, y, len, dir))
@@ -221,7 +230,8 @@ public sealed class SetupViewModel : INotifyPropertyChanged
         _ships.Add(new Ship(x, y, len, dir));
         FleetLens.Remove(len);
 
-        SelectedLen = FleetLens.Count > 0 ? FleetLens[0] : 0;
+        SelectedLen = FleetLens.Count > 0 ? FleetLens[0] : null;
+
 
         RebuildRows();
         OnChanged(nameof(SelfRows));
@@ -269,11 +279,17 @@ public sealed class SetupViewModel : INotifyPropertyChanged
         line = line.Trim();
 
         if (line.Equals("SHIPS_OK", StringComparison.Ordinal))
-        {
-            // we intentionally keep _sending=true to prevent resubmitting ships
-            Status = "✅ Ships accepted. Waiting for opponent…";
-            return;
-        }
+            {
+                _sending = false;
+                _shipsConfirmed = true;
+
+                OnChanged(nameof(CanPlace));
+                OnChanged(nameof(CanReady));
+
+                Status = "✅ Ships accepted. Waiting for opponent…";
+                return;
+            }
+
 
         if (line.Equals("OPPONENT_READY", StringComparison.Ordinal))
         {
@@ -284,7 +300,6 @@ public sealed class SetupViewModel : INotifyPropertyChanged
 
         // any server invalid about ships/ready -> reset fully
         if (line.StartsWith("ERROR SHIPS", StringComparison.Ordinal) ||
-            line.StartsWith("ERROR READY", StringComparison.Ordinal) ||
             line.StartsWith("ERROR PLACE", StringComparison.Ordinal))
         {
             _sending = false;
