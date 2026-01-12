@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AvalonClient")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f1b6130276301f4d128a2701fd9f139b7b859de3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+aa5d11371ffbdcfbe0e6b96d748678894b436d6e")]
 [assembly: System.Reflection.AssemblyProductAttribute("AvalonClient")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AvalonClient")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

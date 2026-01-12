@@ -27,6 +27,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public LobbyViewModel Lobby { get; }
     public SetupViewModel Setup { get; }
     public GameViewModel Game { get; }
+    public ResultViewModel Result { get; }
+
 
     public MainViewModel(ClientSession session)
     {
@@ -113,6 +115,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 Lobby.OnDisconnected();
                 CurrentPage = Lobby;
             });
+        Result = new ResultViewModel();
+
+        Result.LeaveRequested += () =>
+            Dispatcher.UIThread.Post(async () =>
+            {
+                try { await _session.SendLineAsync("LEAVE"); }
+                catch { }
+            });
+
     }
 
     private static bool LooksLikeSetupLine(string line)
@@ -178,6 +189,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
             Game.HandleServerLine(line);
             return;
         }
+        // GO TO RESULT
+        if (line.Equals("WIN", StringComparison.Ordinal) ||
+            line.Equals("LOSE", StringComparison.Ordinal))
+        {
+            Result.SetResult(line);
+            CurrentPage = Result;
+            return;
+        }
+
 
         // Robust: if we see setup-related lines, force Setup page
         if (LooksLikeSetupLine(line))
@@ -189,6 +209,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             Setup.HandleServerLine(line);
             return;
         }
+        
 
         // ROUTE message to current page VM
         if (ReferenceEquals(CurrentPage, Lobby))

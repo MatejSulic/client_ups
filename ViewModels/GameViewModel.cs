@@ -300,34 +300,39 @@ public sealed class GameViewModel : INotifyPropertyChanged
     }
 
     private void ApplySunkLine(string line)
+{
+    // Expected: "SUNK x y len dir"
+    var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    if (parts.Length < 5) return;
+
+    if (!int.TryParse(parts[1], out int x)) return;
+    if (!int.TryParse(parts[2], out int y)) return;
+    if (!int.TryParse(parts[3], out int len)) return;
+    char dir = parts[4][0];
+
+    bool any = false;
+
+    for (int i = 0; i < len; i++)
     {
-        // Example: "SUNK 3 4 3 5 3 6"
-        var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length < 3) return;
+        int cx = x + (dir == 'H' ? i : 0);
+        int cy = y + (dir == 'V' ? i : 0);
 
-        bool any = false;
-
-        for (int i = 1; i + 1 < parts.Length; i += 2)
-        {
-            if (!int.TryParse(parts[i], out int x)) continue;
-            if (!int.TryParse(parts[i + 1], out int y)) continue;
-            if (x < 0 || y < 0 || x >= N || y >= N) continue;
-
-            _enemy[x, y] = 'K';
-            any = true;
-        }
-
-        if (any)
-        {
-            RebuildEnemyRows();
-            Status = "Sunk! ☠️";
-        }
-
-        // Clear pending shot state even if no coords parsed (safety)
-        _pendingShotX = null;
-        _pendingShotY = null;
-        _awaitingShotResult = false;
+        if (cx < 0 || cy < 0 || cx >= N || cy >= N) continue;
+        _enemy[cx, cy] = 'K';
+        any = true;
     }
+
+    if (any)
+    {
+        RebuildEnemyRows();
+        Status = "Sunk! ☠️";
+    }
+
+    _pendingShotX = null;
+    _pendingShotY = null;
+    _awaitingShotResult = false;
+}
+
 
     private void ApplyPendingEnemyMark(char mark, string status)
     {
