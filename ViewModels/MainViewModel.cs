@@ -102,7 +102,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
             Dispatcher.UIThread.Post(() =>
             {
                 Lobby.AppendRx(line);
-                Lobby.AppendInfo($"[route] page={CurrentPage.GetType().Name} line='{line.Trim()}'");
                 OnServerLine(line);
             });
 
