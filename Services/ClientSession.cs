@@ -48,7 +48,12 @@ public sealed class ClientSession : IDisposable
     public async Task SendLineAsync(string line)
     {
         if (_writer == null) throw new InvalidOperationException("Not connected.");
-        Info?.Invoke($"> {line}");
+        if( line == "PING" || line == "PONG")
+        {
+            // suppress logging of heartbeat messages
+        }
+        else{
+        Info?.Invoke($"> {line}");}
         await _writer.WriteLineAsync(line);
     }
 
