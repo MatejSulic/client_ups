@@ -11,6 +11,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private readonly ClientSession _session;
+    private readonly DispatcherTimer _pingWatchdog;
+    private DateTime _lastPingUtc = DateTime.MinValue;
+    private bool _pingTimedOut;
+
 
     private object _currentPage;
     public object CurrentPage
@@ -37,7 +41,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         Lobby = new LobbyViewModel(_session);
         Setup = new SetupViewModel();
         Game = new GameViewModel();
-
+        
         _currentPage = Lobby;
 
         // SETUP -> LEAVE (never block UI)
@@ -109,6 +113,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _session.Disconnected += () =>
             Dispatcher.UIThread.Post(() =>
             {
+                _pingTimedOut = false;
+                _lastPingUtc = DateTime.MinValue;
+
                 Setup.ResetUi();
                 Game.ResetUi();
                 Lobby.OnDisconnected();
@@ -122,6 +129,26 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 try { await _session.SendLineAsync("LEAVE"); }
                 catch { }
             });
+
+        _pingWatchdog = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+_pingWatchdog.Tick += (_, __) =>
+{
+    // hlídáme jen když to vypadá, že jsme připojeni
+    if (!Lobby.IsConnected) return;
+    if (_pingTimedOut) return;
+
+    // dokud jsme nedostali ani jeden ping, nehrotíme
+    if (_lastPingUtc == DateTime.MinValue) return;
+
+    var dt = DateTime.UtcNow - _lastPingUtc;
+    if (dt.TotalSeconds >= 5)
+    {
+        _pingTimedOut = true;
+        Lobby.AppendInfo("❌ Connection lost: no PING for 5s. Disconnecting…");
+        try { _session.Disconnect(); } catch { }
+    }
+};
+_pingWatchdog.Start();
 
     }
 
@@ -141,9 +168,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         line = line.Trim();
 
-                // Heartbeat: reply instantly (server authoritative liveness)
+        // Reply instantly + update watchdog timestamp.
         if (line.Equals("PING", StringComparison.Ordinal))
         {
+            _lastPingUtc = DateTime.UtcNow;
+            _pingTimedOut = false;
+
             _ = Task.Run(async () =>
             {
                 try { await _session.SendLineAsync("PONG"); }
@@ -151,6 +181,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             });
             return;
         }
+
 
         // RETURN TO LOBBY (everywhere)
         if (line.Equals("RETURNED_TO_LOBBY", StringComparison.Ordinal) ||
