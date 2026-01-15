@@ -141,6 +141,17 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         line = line.Trim();
 
+                // Heartbeat: reply instantly (server authoritative liveness)
+        if (line.Equals("PING", StringComparison.Ordinal))
+        {
+            _ = Task.Run(async () =>
+            {
+                try { await _session.SendLineAsync("PONG"); }
+                catch { /* ignore */ }
+            });
+            return;
+        }
+
         // RETURN TO LOBBY (everywhere)
         if (line.Equals("RETURNED_TO_LOBBY", StringComparison.Ordinal) ||
                 line.StartsWith("LEFT ", StringComparison.Ordinal) ||
