@@ -53,7 +53,8 @@ public sealed class ClientSession : IDisposable
             // suppress logging of heartbeat messages
         }
         else{
-        Info?.Invoke($"> {line}");}
+            Info?.Invoke($"> {line}");
+        }
         await _writer.WriteLineAsync(line);
     }
 

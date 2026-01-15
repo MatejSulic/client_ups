@@ -1,6 +1,7 @@
 using AvalonClient.Commands;
 using AvalonClient.Models;
 using AvalonClient.Services;
+using Avalonia.Data;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -94,7 +95,16 @@ public sealed class LobbyViewModel : INotifyPropertyChanged
     }
 
     public void AppendInfo(string line) => Log += $"{line}\n";
-    public void AppendRx(string line) => Log += $"< {line}\n";
+    public void AppendRx(string line)
+    {
+        if(line == "PING" || line == "PONG")
+        {
+            // suppress logging of heartbeat messages
+        }
+        else{
+            Log += $"< {line}\n";
+        }
+    }
 
     public void OnDisconnected()
     {
