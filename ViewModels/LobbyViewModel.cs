@@ -17,7 +17,7 @@ public sealed class LobbyViewModel : INotifyPropertyChanged
 
     private string _host = "127.0.0.1";
     private string _portText = "5555";
-    private string _nick = "Filip";
+    private string _nick = "Nick123";
     private string _log = "";
     private string _roomsHeader = "—";
 
