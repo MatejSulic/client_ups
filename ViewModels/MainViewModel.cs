@@ -181,6 +181,12 @@ _pingWatchdog.Start();
             });
             return;
         }
+                if (line.StartsWith("WELCOME", StringComparison.Ordinal))
+        {
+            _pingTimedOut = false;
+            _lastPingUtc = DateTime.UtcNow; // start grace window
+        }
+
 
 
         // RETURN TO LOBBY (everywhere)
