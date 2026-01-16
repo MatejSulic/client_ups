@@ -14,8 +14,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private int _invalidBurst;
     private DateTime _invalidWindowStartUtc = DateTime.UtcNow;
 
-    private const int INVALID_MAX_PER_SEC = 30;   // kolik invalid řádků/s tolerujeme
-    private const int MAX_LINE_LEN = 256;         // max délka řádku, jinak je to útok/garbage
+    private const int INVALID_MAX_PER_SEC = 3;   // kolik invalid řádků/s tolerujeme
+    private const int MAX_LINE_LEN = 80;         // max délka řádku, jinak je to útok/garbage
 
     private readonly ClientSession _session;
     private readonly DispatcherTimer _pingWatchdog;
@@ -112,7 +112,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _session.LineReceived += line =>
             Dispatcher.UIThread.Post(() =>
             {
-                Lobby.AppendRx(line);
                 OnServerLine(line);
             });
 
@@ -256,6 +255,8 @@ _pingWatchdog.Start();
         // drop/kick invalid spam
         if (RejectInvalidOrSpam(line))
             return;
+
+        Lobby.AppendRx(line);
 
 
         // Reply instantly + update watchdog timestamp.
