@@ -174,19 +174,35 @@ _pingWatchdog.Start();
         var cmd = parts[0];
 
         // whitelist jen toho, co fakt umíš
-        return cmd is
+       return cmd is
+            // heartbeat / connect
             "PING" or "WELCOME" or
+
+            // lobby
             "ROOMS" or "ROOM" or
-            "JOINED" or "WAIT" or "SETUP" or "PHASE" or
+            "JOINED" or "WAIT" or
+
+            // phases
+            "SETUP" or "PLAY" or "PHASE" or
+            "REJOINED" or
+
+            // setup
             "SHIPS_OK" or "OPPONENT_READY" or
-            "PLAY" or "YOUR_TURN" or "OPP_TURN" or
+
+            // game
+            "YOUR_TURN" or "OPP_TURN" or
             "WATER" or "HIT" or "SINK" or "SUNK" or
             "BENEMY" or "BSELF" or
             "WIN" or "LOSE" or "LOSS" or
-            "LEFT" or "RETURNED_TO_LOBBY" or "OPPONENT_LEFT" or
-            "OPPONENT_DOWN" or "OPPONENT_UP" or "OPPONENT_TIMEOUT" or
-            "ROOM_CLOSED" or
+
+            // room / disconnects
+            "LEFT" or "RETURNED_TO_LOBBY" or
+            "OPPONENT_LEFT" or "OPPONENT_DOWN" or "OPPONENT_TIMEOUT" or
+            "ROOM_CLOSED" or "OPPONENT UP" or
+
+            // errors
             "ERROR";
+
     }
 
     private bool RejectInvalidOrSpam(string line)
