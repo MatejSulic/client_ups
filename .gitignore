@@ -1,0 +1,45 @@
+# ===== .NET / Avalonia =====
+bin/
+obj/
+.vs/
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# User-specific files
+*.user
+*.suo
+*.rsuser
+*.userprefs
+
+# Build / publish outputs
+*.dll
+*.exe
+*.pdb
+*.cache
+*.nupkg
+*.snupkg
+*.deps.json
+*.runtimeconfig.json
+
+# Avalonia / XAML designer
+*.Designer.cs
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Test results
+TestResults/
+
+# Coverage
+coverage/
+coverage.*
+
+# Temporary
+*.tmp
+*.temp
