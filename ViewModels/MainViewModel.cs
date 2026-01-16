@@ -10,6 +10,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
 
+        // --- Invalid spam guard ---
+    private int _invalidBurst;
+    private DateTime _invalidWindowStartUtc = DateTime.UtcNow;
+
+    private const int INVALID_MAX_PER_SEC = 30;   // kolik invalid řádků/s tolerujeme
+    private const int MAX_LINE_LEN = 256;         // max délka řádku, jinak je to útok/garbage
+
     private readonly ClientSession _session;
     private readonly DispatcherTimer _pingWatchdog;
     private DateTime _lastPingUtc = DateTime.MinValue;
@@ -152,6 +159,68 @@ _pingWatchdog.Start();
 
     }
 
+    private void DisconnectForSpam(string reason)
+    {
+        Lobby.AppendInfo("🚫 Protocol spam: " + reason + " -> disconnect");
+        try { _session.Disconnect(); } catch { }
+    }
+
+    private bool IsValidServerLine(string line)
+    {
+        if (string.IsNullOrWhiteSpace(line)) return false;
+
+        // první token jako command
+        var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var cmd = parts[0];
+
+        // whitelist jen toho, co fakt umíš
+        return cmd is
+            "PING" or "WELCOME" or
+            "ROOMS" or "ROOM" or
+            "JOINED" or "WAIT" or "SETUP" or "PHASE" or
+            "SHIPS_OK" or "OPPONENT_READY" or
+            "PLAY" or "YOUR_TURN" or "OPP_TURN" or
+            "WATER" or "HIT" or "SINK" or "SUNK" or
+            "BENEMY" or "BSELF" or
+            "WIN" or "LOSE" or "LOSS" or
+            "LEFT" or "RETURNED_TO_LOBBY" or "OPPONENT_LEFT" or
+            "OPPONENT_DOWN" or "OPPONENT_UP" or "OPPONENT_TIMEOUT" or
+            "ROOM_CLOSED" or
+            "ERROR";
+    }
+
+    private bool RejectInvalidOrSpam(string line)
+    {
+        var now = DateTime.UtcNow;
+
+        // hard limit délky = instant kick (typický garbage / fuzz)
+        if (line.Length > MAX_LINE_LEN)
+        {
+            DisconnectForSpam($"line too long ({line.Length})");
+            return true; // stop processing
+        }
+
+        // invalid rate window 1s
+        if ((now - _invalidWindowStartUtc).TotalSeconds >= 1)
+        {
+            _invalidWindowStartUtc = now;
+            _invalidBurst = 0;
+        }
+
+        if (!IsValidServerLine(line))
+        {
+            _invalidBurst++;
+
+            // nepřidávej to do logu po jednom, tím by tě dorazili
+            if (_invalidBurst >= INVALID_MAX_PER_SEC)
+            {
+                DisconnectForSpam($"too many invalid lines ({_invalidBurst}/s)");
+            }
+            return true; // drop invalid line
+        }
+
+        return false; // valid -> pokračuj
+    }
 
     private void EnsureSetupActive()
     {
@@ -167,6 +236,11 @@ _pingWatchdog.Start();
     private void OnServerLine(string line)
     {
         line = line.Trim();
+
+        // drop/kick invalid spam
+        if (RejectInvalidOrSpam(line))
+            return;
+
 
         // Reply instantly + update watchdog timestamp.
         if (line.Equals("PING", StringComparison.Ordinal))
