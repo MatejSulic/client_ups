@@ -323,6 +323,21 @@ public sealed class SetupViewModel : INotifyPropertyChanged
             Status = "🎮 GAME START!";
             return;
         }
+          //Information about opponent timout
+        if (line.Equals("OPPONENT_DOWN", StringComparison.Ordinal))
+        {
+            Status = "⚠️ Opponent down, waiting for reconnection.";
+            return;
+        }
+       
+        if (line.Equals("OPPONENT_UP", StringComparison.Ordinal))
+        {
+         
+            
+            Status = "⚠️ Opponent up, back online.";
+            
+            return;
+        }
     }
 
     public IReadOnlyList<Ship> GetShips() => _ships.AsReadOnly();

@@ -193,6 +193,23 @@ public sealed class GameViewModel : INotifyPropertyChanged
             return;
         }
 
+          //Information about opponent timout
+        if (line.Equals("OPPONENT_DOWN", StringComparison.Ordinal))
+        {
+            if (!GameOver)
+            {
+                Status = "⚠️ Opponent down, waiting for reconnection.";
+            }
+            return;
+        }
+        if (line.Equals("OPPONENT_UP", StringComparison.Ordinal))
+        {
+            if (!GameOver)
+            {
+                Status = "⚠️ Opponent up, back online.";
+            }
+            return;
+        }
         // TURN
         if (line.Equals("YOUR_TURN", StringComparison.Ordinal))
         {

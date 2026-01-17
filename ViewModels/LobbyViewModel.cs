@@ -228,6 +228,15 @@ public sealed class LobbyViewModel : INotifyPropertyChanged
             return;
         }
 
+        //Information about opponent timout
+        if (line.Equals("OPPONENT_DOWN", StringComparison.Ordinal))
+        {
+            _roomPhase = RoomPhase.Lobby;
+            OnChanged(nameof(CanLeave));
+            RoomStatus = $"Room #{_currentRoomId}: Opponent down, waiting for reconnection.";
+            return;
+        }
+
         if (line.Equals("RETURNED_TO_LOBBY", StringComparison.Ordinal) ||
             line.StartsWith("LEFT ", StringComparison.Ordinal) ||
             line.Equals("OPPONENT_LEFT", StringComparison.Ordinal))
